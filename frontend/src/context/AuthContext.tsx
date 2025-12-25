@@ -5,6 +5,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { useNavigate } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
 import { ACCESS_TOKEN, REFRESH_TOKEN } from "../constants/constants";
 
@@ -27,27 +28,37 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [authenticated, setAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [userId, setUserId] = useState<number | null>(null);
+  const navigate = useNavigate();
+
+  // Helper function to clear storage
+  const clearAuth = () => {
+    localStorage.removeItem(ACCESS_TOKEN);
+    localStorage.removeItem(REFRESH_TOKEN);
+    setAuthenticated(false);
+    setUserId(null);
+  };
 
   useEffect(() => {
     const token = localStorage.getItem(ACCESS_TOKEN);
-    if (token) {
-      try {
-        const decoded = jwtDecode<DecodedToken>(token);
-        const now = Date.now() / 1000;
-        if (decoded.exp > now) {
-          setAuthenticated(true);
-          setUserId(decoded.user_id);
-        } else {
-          // Token expired
-          localStorage.removeItem(ACCESS_TOKEN);
-          localStorage.removeItem(REFRESH_TOKEN);
-        }
-      } catch {
-        localStorage.removeItem(ACCESS_TOKEN);
-        localStorage.removeItem(REFRESH_TOKEN);
-      } finally {
-        setIsLoading(false);
+    if (!token) {
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      const decoded = jwtDecode<DecodedToken>(token);
+      const now = Date.now() / 1000;
+      if (decoded.exp > now) {
+        setAuthenticated(true);
+        setUserId(decoded.user_id);
+      } else {
+        // Token expired, so clear the storage
+        clearAuth();
       }
+    } catch {
+      clearAuth();
+    } finally {
+      setIsLoading(false);
     }
   }, []);
 
@@ -57,13 +68,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const decoded = jwtDecode<DecodedToken>(access);
     setUserId(decoded.user_id);
     setAuthenticated(true);
+    navigate("/", { replace: true });
   };
 
   const logout = () => {
-    localStorage.removeItem(ACCESS_TOKEN);
-    localStorage.removeItem(REFRESH_TOKEN);
-    setAuthenticated(false);
-    setUserId(null);
+    clearAuth();
+    navigate("/login", { replace: true });
   };
 
   return (
