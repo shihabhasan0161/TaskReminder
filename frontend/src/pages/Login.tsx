@@ -11,12 +11,13 @@ export default function Login() {
 
   const { login } = useAuth();
 
-  const handleLogin = async (e) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setLoading(true);
     try {
-      const response = await api.post("/api/token", {
-        email,
+      const response = await api.post("/api/token/", {
+        username: email,
         password,
       });
       login(response.data.access, response.data.refresh);
