@@ -3,42 +3,39 @@ import {
   useContext,
   useEffect,
   useState,
+  useCallback,
   type ReactNode,
 } from "react";
 import { useNavigate } from "react-router-dom";
-import { jwtDecode } from "jwt-decode";
 import { ACCESS_TOKEN, REFRESH_TOKEN } from "../constants/constants";
+import api from "../api/axios";
 
-interface DecodedToken {
-  user_id: number;
-  exp: number;
+interface User {
+  pk: number;
+  email: string;
 }
 
 interface AuthContextType {
-  authenticated: boolean;
+  user: User | null;
   isLoading: boolean;
-  userId: number | null;
-  login: (access: string, refresh: string) => void;
-  logout: () => void;
+  login: (email: string, password: string) => Promise<void>;
+  register: (
+    email: string,
+    password1: string,
+    password2: string
+  ) => Promise<void>;
+  loginWithGoogle: (code: string) => Promise<void>;
+  logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [authenticated, setAuthenticated] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [userId, setUserId] = useState<number | null>(null);
   const navigate = useNavigate();
 
-  // Helper function to clear storage
-  const clearAuth = () => {
-    localStorage.removeItem(ACCESS_TOKEN);
-    localStorage.removeItem(REFRESH_TOKEN);
-    setAuthenticated(false);
-    setUserId(null);
-  };
-
-  useEffect(() => {
+  const fetchUser = useCallback(async () => {
     const token = localStorage.getItem(ACCESS_TOKEN);
     if (!token) {
       setIsLoading(false);
@@ -46,39 +43,69 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
 
     try {
-      const decoded = jwtDecode<DecodedToken>(token);
-      const now = Date.now() / 1000;
-      if (decoded.exp > now) {
-        setAuthenticated(true);
-        setUserId(decoded.user_id);
-      } else {
-        // Token expired, so clear the storage
-        clearAuth();
-      }
+      const res = await api.get("/api/auth/user/");
+      setUser(res.data);
     } catch {
-      clearAuth();
+      localStorage.removeItem(ACCESS_TOKEN);
+      localStorage.removeItem(REFRESH_TOKEN);
+      setUser(null);
     } finally {
       setIsLoading(false);
     }
   }, []);
 
-  const login = (access: string, refresh: string) => {
-    localStorage.setItem(ACCESS_TOKEN, access);
-    localStorage.setItem(REFRESH_TOKEN, refresh);
-    const decoded = jwtDecode<DecodedToken>(access);
-    setUserId(decoded.user_id);
-    setAuthenticated(true);
+  useEffect(() => {
+    fetchUser();
+  }, [fetchUser]);
+
+  const login = async (email: string, password: string) => {
+    const res = await api.post("/api/auth/login/", { email, password });
+    localStorage.setItem(ACCESS_TOKEN, res.data.access);
+    localStorage.setItem(REFRESH_TOKEN, res.data.refresh);
+    await fetchUser();
     navigate("/", { replace: true });
   };
 
-  const logout = () => {
-    clearAuth();
-    navigate("/login", { replace: true });
+  const register = async (
+    email: string,
+    password1: string,
+    password2: string
+  ) => {
+    const response = await api.post("/api/auth/registration/", {
+      email,
+      password1,
+      password2,
+    });
+    localStorage.setItem(ACCESS_TOKEN, response.data.access);
+    localStorage.setItem(REFRESH_TOKEN, response.data.refresh);
+    await fetchUser();
+    navigate("/");
+  };
+
+  const loginWithGoogle = async (code: string) => {
+    const response = await api.post("/api/auth/google/", { code });
+    localStorage.setItem(ACCESS_TOKEN, response.data.access);
+    localStorage.setItem(REFRESH_TOKEN, response.data.refresh);
+    await fetchUser();
+    navigate("/");
+  };
+
+  const logout = async () => {
+    try {
+      await api.post("/api/auth/logout/");
+    } catch {
+      // Continue logout even if API fails
+    } finally {
+      localStorage.removeItem(ACCESS_TOKEN);
+      localStorage.removeItem(REFRESH_TOKEN);
+      setUser(null);
+      navigate("/login", { replace: true });
+    }
   };
 
   return (
     <AuthContext.Provider
-      value={{ authenticated, isLoading, userId, login, logout }}
+      value={{ user, isLoading, login, register, loginWithGoogle, logout }}
     >
       {children}
     </AuthContext.Provider>
