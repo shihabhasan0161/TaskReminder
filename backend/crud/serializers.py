@@ -25,10 +25,8 @@ class TaskSerializer(serializers.ModelSerializer):
         ]
 
 
-class TaskCompletionSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Task
-        fields = ["is_completed"]
+class TaskCompletionSerializer(serializers.Serializer):
+    is_completed = serializers.BooleanField()
 
 
 class GoogleCalendarEventSerializer(serializers.Serializer):

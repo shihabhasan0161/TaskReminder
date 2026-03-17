@@ -11,7 +11,7 @@ from googleapiclient.errors import HttpError
 from google.auth.transport.requests import Request
 
 from .models import Task
-from .serializers import TaskSerializer, GoogleCalendarEventSerializer
+from .serializers import TaskSerializer, TaskCompletionSerializer, GoogleCalendarEventSerializer
 
 
 class TaskListCreateView(generics.ListCreateAPIView):
@@ -19,6 +19,7 @@ class TaskListCreateView(generics.ListCreateAPIView):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
+        # Filter tasks by the authenticated user and optionally by completion status
         user = self.request.user
         is_completed = self.request.query_params.get("is_completed", None)
 
@@ -53,8 +54,10 @@ class TaskCompleteView(APIView):
                 {"error": "Task not found"}, status=status.HTTP_404_NOT_FOUND
             )
 
-        is_completed = request.data.get("is_completed", True)
-        task.is_completed = bool(is_completed)
+        serializer = TaskCompletionSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        task.is_completed = serializer.validated_data["is_completed"]
         task.completed_at = timezone.now() if task.is_completed else None
         task.save(update_fields=["is_completed", "completed_at"])
 

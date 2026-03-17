@@ -1,6 +1,6 @@
 import pytest
 
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 from rest_framework.test import APIClient
 from rest_framework_simplejwt.tokens import RefreshToken
 
@@ -18,7 +18,8 @@ def user(db):
     """
     Test user
     """
-    return User.objects.create_user(username="test", password="test")
+    User = get_user_model()
+    return User.objects.create_user(email="test@example.com", password="test")
 
 
 @pytest.fixture

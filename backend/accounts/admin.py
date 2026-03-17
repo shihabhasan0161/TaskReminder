@@ -9,11 +9,20 @@ class UserAdmin(BaseUserAdmin):
     list_display = ("email", "is_staff", "is_active")
     fieldsets = (
         (None, {"fields": ("email", "password")}),
-        ("Permissions", {"fields": ("is_active", "is_staff", "is_superuser", "groups", "user_permissions")}),
+        (
+            "Permissions",
+            {
+                "fields": (
+                    "is_active",
+                    "is_staff",
+                    "is_superuser",
+                    "groups",
+                    "user_permissions",
+                )
+            },
+        ),
         ("Dates", {"fields": ("last_login",)}),
     )
-    add_fieldsets = (
-        (None, {"fields": ("email", "password1", "password2")}),
-    )
+    add_fieldsets = ((None, {"fields": ("email", "password1", "password2")}),)
     search_fields = ("email",)
     readonly_fields = ("last_login",)

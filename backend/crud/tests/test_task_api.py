@@ -11,21 +11,21 @@ def test_create_task(auth_client) -> None:
     :param auth_client:
     :return: None
     """
-    payload = {
-        "title": "Do leetcode",
-        "content": "Do the leetcode contains duplicate problem.",
+    mock_data = {
+        "title": "Mock Task",
+        "content": "Mock Task Content",
     }
 
     response = auth_client.post(
         "/api/tasks/",
-        data=payload,
+        data=mock_data,
         format="json",
     )
 
     logger.info(f"Response: {response.data}")
 
     assert response.status_code == 201  # 201 means created
-    assert response.data["title"] == payload["title"]
+    assert response.data["title"] == mock_data["title"]
 
 
 @pytest.mark.django_db
@@ -33,21 +33,21 @@ def test_delete_task(auth_client) -> None:
     """
     Delete task by id test
     """
-    payload = {
+    mock_data = {
         "title": "Temp task",
         "content": "This task will be deleted",
     }
 
     response = auth_client.post(
         "/api/tasks/",
-        data=payload,
+        data=mock_data,
         format="json",
     )
 
     assert response.status_code == 201
     task_id = response.data["id"]
 
-    delete_response = auth_client.delete(f"/api/tasks/delete/{task_id}/")
+    delete_response = auth_client.delete(f"/api/tasks/{task_id}/")
 
     logger.info(f"Delete response status: {delete_response.status_code}")
 
