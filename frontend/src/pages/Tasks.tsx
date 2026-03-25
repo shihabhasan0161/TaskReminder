@@ -61,13 +61,13 @@ export default function Tasks() {
     }
   }
 
-  const handleAddToCalendar = async (task: Task) => {
-    try {
+  // const handleAddToCalendar = async (task: Task) => {
+  //   try {
 
-    } catch {
+  //   } catch {
       
-    }
-  }
+  //   }
+  // }
 
   return (
     <div>

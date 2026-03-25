@@ -61,3 +61,24 @@ def test_get_all_task(auth_client) -> None:
     response = auth_client.get("/api/tasks/")
     assert response.status_code == 200
     assert isinstance(response.data, list)
+
+@pytest.mark.django_db
+def test_update_status(auth_client) -> None:
+    mock_data = {
+        "title": "Task to update",
+        "content": "This task will have its status updated",
+        "is_completed": False,
+    }
+
+    response = auth_client.post(
+        "/api/tasks/",
+        data=mock_data,
+        format="json",
+    )
+
+    assert response.status_code == 201
+    task_id = response.data["id"]
+
+    update_status = auth_client.patch(f"/api/tasks/{task_id}/complete/", data={"is_completed": True}, format="json")
+    assert update_status.status_code == 200
+    assert update_status.data["is_completed"] is True
