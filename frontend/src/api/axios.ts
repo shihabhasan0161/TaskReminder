@@ -1,5 +1,5 @@
 import axios from "axios";
-import { ACCESS_TOKEN, REFRESH_TOKEN } from "../constants/constants";
+import { ACCESS_TOKEN, REFRESH_TOKEN } from "../components/constants/constants";
 
 const api = axios.create({
   baseURL: "http://localhost:8000",

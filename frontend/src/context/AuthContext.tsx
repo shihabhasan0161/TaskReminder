@@ -7,7 +7,7 @@ import {
   type ReactNode,
 } from "react";
 import { useNavigate } from "react-router-dom";
-import { ACCESS_TOKEN, REFRESH_TOKEN } from "../constants/constants";
+import { ACCESS_TOKEN, REFRESH_TOKEN } from "../components/constants/constants";
 import api from "../api/axios";
 
 interface User {
